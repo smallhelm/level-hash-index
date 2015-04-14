@@ -1,16 +1,30 @@
-var _ = require('lodash');
 var strHash = require('./utils/stringHash');
 var NotFoundError = require('level-errors').NotFoundError;
 var toPaddedBase36 = require('./utils/toPaddedBase36');
 
 module.exports = function(db, options){
   options = options || {};
-  var hashFn = _.isFunction(options.hashFn) ? options.hashFn : strHash;
-  var hash_seq_length = _.isNumber(options.hash_seq_length) && options.hash_seq_length > 0 ? options.hash_seq_length : 2;
-  var index_prefix = _.isString(options.index_prefix) ? options.index_prefix : 'hash!';
+  var hashFn = options.hashFn || strHash;
+  var hash_seq_length = options.hash_seq_length > 0 ? options.hash_seq_length : 2;
+  var index_prefix = options.index_prefix || 'hash!';
 
 
   var runtime_cache_collisions = {};
+
+  var nextHashForThisValHash = function(val_hash){
+    var next_hash_seq = -1;
+    var key, hash, hash_seq;
+    for(val in runtime_cache_collisions[val_hash]){
+      if(runtime_cache_collisions[val_hash].hasOwnProperty(val)){
+        hash = runtime_cache_collisions[val_hash][val].hash;
+        hash_seq = parseInt(hash.substring(hash.length - hash_seq_length), 36);
+        if(hash_seq > next_hash_seq){
+          next_hash_seq = hash_seq;
+        }
+      }
+    }
+    return val_hash + toPaddedBase36(next_hash_seq + 1, hash_seq_length);
+  };
 
   var loadFromCache = function(val_hash, val, callback){
     if(!runtime_cache_collisions[val_hash].hasOwnProperty(val)){
@@ -69,12 +83,7 @@ module.exports = function(db, options){
       if(the_hash !== null){
         callback(null, {hash: the_hash});
       }else{
-        var seq_nums = _.map(runtime_cache_collisions[val_hash], function(o){
-          var hash = o.hash;
-          return parseInt(hash.substring(hash.length - hash_seq_length), 36);
-        });
-        var next_num = _.isEmpty(seq_nums) ? 0 : _.max(seq_nums) + 1;
-        var hash = val_hash + toPaddedBase36(next_num, hash_seq_length);
+        var hash = nextHashForThisValHash(val_hash);
         runtime_cache_collisions[val_hash][val] = {is_new: true, hash: hash, key: index_prefix + hash};
         callback(null, runtime_cache_collisions[val_hash][val]);
       }
