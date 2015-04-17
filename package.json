@@ -1,6 +1,6 @@
 {
   "name": "level-hash-index",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Store any string into level, and get a collision free hash of that value that you can use in an index or something.",
   "main": "index.js",
   "repository": {
