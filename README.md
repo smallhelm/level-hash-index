@@ -31,25 +31,25 @@ h.putAndWrite("hello", function(err, hash){
 });
 ```
 
-## h = HashIndex(db, options)
- * _db_ is your levelup db (i.e. level, sublevel, multilevel etc... )
- * _options.hashFn_ any hash function that takes in a string and returns a string
- * _options.hash\_seq\_length_ the number of base 36 digits to use in the hash collision seq number (default is 2)
- * _options.index\_prefix_ the level key = index\_prefix + hash (default prefix is "hash!")
+### h = HashIndex(db, options)
+ * __db__ is your levelup db (i.e. level, sublevel, multilevel etc... )
+ * __options.hashFn__ any hash function that takes in a string and returns a string
+ * __options.hash\_seq\_length__ the number of base 36 digits to use in the hash collision seq number (default is 2)
+ * __options.index\_prefix__ the level key = index\_prefix + hash (default prefix is "hash!")
 
 
-## h.put(val, callback(err, data))
+### h.put(val, callback(err, data))
 Given a value, get it's unique hash. The callback data is one of these two
  * `{hash: hash}` - the hash of the value that's persisted to the db
  * `{hash: hash, is_new: true, key: db_key}` - the hash of the value and it's raw db key that hasn't yet been persisted, but is the hash that will be used once it is persisted.
 
-## h.putAndWrite(val, callback(err, hash))
+### h.putAndWrite(val, callback(err, hash))
 Given a value, get it's hash, and write to the db if it hasn't yet been persisted.
 
-## h.getHash(val, callback(err, hash))
+### h.getHash(val, callback(err, hash))
 Given a value, get the hash for that value, if it has been persisted to the db. Uses level's NotFoundError if not found.
 
-## h.get(hash, callback(err, val))
+### h.get(hash, callback(err, val))
 Given a hash get the value. Uses level's NotFoundError if not found.
 
 # License
