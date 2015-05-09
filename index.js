@@ -1,11 +1,9 @@
 var strHash = require('./utils/stringHash');
 var NotFoundError = require('level-errors').NotFoundError;
-var toPaddedBase36 = require('./utils/toPaddedBase36');
 
 module.exports = function(db, options){
   options = options || {};
   var hashFn = options.hashFn || strHash;
-  var hash_seq_length = options.hash_seq_length > 0 ? options.hash_seq_length : 2;
   var index_prefix = options.index_prefix || 'hash!';
 
 
@@ -17,13 +15,14 @@ module.exports = function(db, options){
     for(val in runtime_cache_collisions[val_hash]){
       if(runtime_cache_collisions[val_hash].hasOwnProperty(val)){
         hash = runtime_cache_collisions[val_hash][val].hash;
-        hash_seq = parseInt(hash.substring(hash.length - hash_seq_length), 36);
+        hash_seq = parseInt(hash.substring(val_hash.length), 36);
         if(hash_seq > next_hash_seq){
           next_hash_seq = hash_seq;
         }
       }
     }
-    return val_hash + toPaddedBase36(next_hash_seq + 1, hash_seq_length);
+    var n = next_hash_seq + 1;
+    return val_hash + n.toString(36);
   };
 
   var loadFromCache = function(val_hash, val, callback){

@@ -10,7 +10,7 @@ var genRandomString = require('./utils/genRandomString');
 test("ensure the basics work", function(t){
   var db = level(memdown);
   var hindex = HashIndex(db);
-  var expected_hash_key = strHash("hello") + "00";
+  var expected_hash_key = strHash("hello") + "0";
 
   hindex.get(expected_hash_key, function(err, val){
     t.equal(err && err.type, 'NotFoundError');
@@ -48,10 +48,22 @@ var hashingThatAlwaysCollides = function(){
   return "notahash";
 };
 
+var assertCollisionsExistAndAreHandled = function(t, vals, hashes){
+  t.ok(_.every(hashes, _.isString), "assert all hashes are string");
+  t.equal(hashes.length, _.unique(hashes).length, "assert no collisions");
+  t.equal(1, _.unique(hashes.map(function(hash, i){
+    var val_hash = hashingThatAlwaysCollides(vals[i]);
+    return hash.substring(0, val_hash.length);
+  })).length, "assert they actually did collide");
+  t.equal(vals.length - 1, _.max(hashes.map(function(hash, i){
+    var val_hash = hashingThatAlwaysCollides(vals[i]);
+    return parseInt(hash.substring(val_hash.length), 36);
+  })), "assert they actually did collide");
+};
+
 test("handle hash collisions that are persisted", function(t){
   var hindex = HashIndex(level(memdown), {
-    hashFn: hashingThatAlwaysCollides,
-    hash_seq_length: 2
+    hashFn: hashingThatAlwaysCollides
   });
 
   var vals = _.unique(_.map(_.range(0, 100), genRandomString));
@@ -59,19 +71,14 @@ test("handle hash collisions that are persisted", function(t){
   async.series(vals.map(function(val){
     return async.apply(hindex.putAndWrite, val);
   }), function(err, hashes){
-    t.ok(_.every(hashes, _.isString), "assert all hashes are string");
-    t.equal(hashes.length, _.unique(hashes).length, "assert no collisions");
-    t.equal(1, _.unique(hashes.map(function(hash){
-      return hash.substring(0, hash.length - 2);
-    })).length, "assert they actually did collide");
+    assertCollisionsExistAndAreHandled(t, vals, hashes);
     t.end(err);
   });
 });
 
 test("handle hash collisions that are not yet persisted", function(t){
   var hindex = HashIndex(level(memdown), {
-    hashFn: hashingThatAlwaysCollides,
-    hash_seq_length: 2
+    hashFn: hashingThatAlwaysCollides
   });
 
   var vals = _.unique(_.map(_.range(0, 100), genRandomString));
@@ -81,11 +88,7 @@ test("handle hash collisions that are not yet persisted", function(t){
   }), function(err, results){
     var hashes = _.pluck(results, "hash");
     t.ok(_.every(_.pluck(results, "is_new")), "assert all are new hashes");
-    t.ok(_.every(hashes, _.isString), "assert all hashes are string");
-    t.equal(hashes.length, _.unique(hashes).length, "assert no collisions");
-    t.equal(1, _.unique(hashes.map(function(hash){
-      return hash.substring(0, hash.length - 2);
-    })).length, "assert they actually did collide");
+    assertCollisionsExistAndAreHandled(t, vals, hashes);
     t.end(err);
   });
 });

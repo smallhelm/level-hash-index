@@ -34,7 +34,6 @@ h.putAndWrite("hello", function(err, hash){
 ### h = HashIndex(db, options)
  * __db__ is your levelup db (i.e. level, sublevel, multilevel etc... )
  * __options.hashFn__ any hash function that takes in a string and returns a string
- * __options.hash\_seq\_length__ the number of base 36 digits to use in the hash collision seq number (default is 2)
  * __options.index\_prefix__ the level key = index\_prefix + hash (default prefix is "hash!")
 
 

@@ -14,8 +14,7 @@
   ],
   "files": [
     "index.js",
-    "utils/stringHash.js",
-    "utils/toPaddedBase36.js"
+    "utils/stringHash.js"
   ],
   "author": "smallhelm",
   "license": "MIT",
